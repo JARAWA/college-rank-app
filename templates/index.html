@@ -5,24 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MHTCET 2025 College Finder</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-    <style>
-        .select2-container .select2-selection--single {
-            height: 38px !important;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 38px !important;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 36px !important;
-        }
-        .select2-container--default .select2-selection--multiple {
-            border-color: #D1D5DB !important;
-        }
-    </style>
 </head>
 <body class="bg-gray-100">
     <nav class="bg-white shadow">
@@ -32,115 +14,53 @@
     </nav>
 
     <div class="container mx-auto px-4 py-6">
-        <!-- Advanced Search Form -->
+        <!-- Search Form -->
         <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <form id="searchForm" method="POST" action="/search" class="space-y-4">
-                <!-- Rank Range -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form method="POST" action="/search" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Minimum Rank</label>
+                        <label class="block text-sm font-medium text-gray-700">Rank</label>
                         <input type="number" 
-                               name="rank_min" 
-                               min="1"
-                               value="{{ selected_rank_min or '' }}"
+                               name="rank" 
+                               min="1" 
+                               required
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
+                    
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Maximum Rank</label>
-                        <input type="number" 
-                               name="rank_max"
-                               min="1"
-                               value="{{ selected_rank_max or '' }}"
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    </div>
-                </div>
-
-                <!-- Multiple Select Filters -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Categories</label>
-                        <select name="categories" 
-                                multiple
-                                class="select2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700">Category</label>
+                        <select name="category" 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="All">All Categories</option>
                             {% for category in categories %}
-                            <option value="{{ category }}" 
-                                    {% if category in selected_categories %}selected{% endif %}>
-                                {{ category }}
-                            </option>
+                            <option value="{{ category }}">{{ category }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Quotas</label>
-                        <select name="quotas" 
-                                multiple
-                                class="select2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700">Quota</label>
+                        <select name="quota" 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="All">All Quotas</option>
                             {% for quota in quotas %}
-                            <option value="{{ quota }}"
-                                    {% if quota in selected_quotas %}selected{% endif %}>
-                                {{ quota }}
-                            </option>
+                            <option value="{{ quota }}">{{ quota }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Branches</label>
-                        <select name="branches" 
-                                multiple
-                                class="select2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700">Branch</label>
+                        <select name="branch" 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="All">All Branches</option>
                             {% for branch in branches %}
-                            <option value="{{ branch }}"
-                                    {% if branch in selected_branches %}selected{% endif %}>
-                                {{ branch }}
-                            </option>
+                            <option value="{{ branch }}">{{ branch }}</option>
                             {% endfor %}
                         </select>
                     </div>
                 </div>
 
-                <!-- College and City Search -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">College Name</label>
-                        <select name="college_name"
-                                class="select2-college mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="All">All Colleges</option>
-                            {% for college in colleges %}
-                            <option value="{{ college }}"
-                                    {% if college == selected_college %}selected{% endif %}>
-                                {{ college }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">City</label>
-                        <select name="city"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="All">All Cities</option>
-                            {% for city in cities %}
-                            <option value="{{ city }}"
-                                    {% if city == selected_city %}selected{% endif %}>
-                                {{ city }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Hidden fields for sorting and pagination -->
-                <input type="hidden" name="sort_by" value="{{ sort_by or 'rank' }}">
-                <input type="hidden" name="sort_order" value="{{ sort_order or 'asc' }}">
-                <input type="hidden" name="page" value="1">
-                <input type="hidden" name="per_page" value="50">
-
-                <!-- Search Button -->
                 <div class="flex justify-center">
                     <button type="submit" 
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
@@ -153,113 +73,43 @@
         <!-- Results Section -->
         {% if results %}
         <div class="space-y-6">
-            <!-- Enhanced Statistics Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-white p-4 rounded-lg shadow">
                     <div class="text-sm text-gray-600">Total Matches</div>
-                    <div class="text-xl font-bold text-blue-600">{{ stats.total_matches }}</div>
+                    <div class="text-xl font-bold text-blue-600">{{ total_matches }}</div>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow">
                     <div class="text-sm text-gray-600">Rank Range</div>
-                    <div class="text-xl font-bold text-blue-600">{{ stats.rank_min }} - {{ stats.rank_max }}</div>
+                    <div class="text-xl font-bold text-blue-600">{{ rank_min }} - {{ rank_max }}</div>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow">
                     <div class="text-sm text-gray-600">Unique Colleges</div>
-                    <div class="text-xl font-bold text-blue-600">{{ stats.unique_colleges }}</div>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <div class="text-sm text-gray-600">Unique Branches</div>
-                    <div class="text-xl font-bold text-blue-600">{{ stats.unique_branches }}</div>
+                    <div class="text-xl font-bold text-blue-600">{{ unique_colleges }}</div>
                 </div>
             </div>
 
             <!-- Results Table -->
             <div class="bg-white rounded-lg shadow overflow-x-auto">
-                <div class="flex justify-end p-4">
-                    <button onclick="exportToExcel()" 
-                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
-                        Export to Excel
-                    </button>
-                </div>
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100"
-                                data-column="college_code">
-                                College Code
-                                {% if sort_by == 'college_code' %}
-                                <span class="ml-1">{% if sort_order == 'asc' %}↑{% else %}↓{% endif %}</span>
-                                {% endif %}
-                            </th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100"
-                                data-column="college_name">
-                                College Name
-                                {% if sort_by == 'college_name' %}
-                                <span class="ml-1">{% if sort_order == 'asc' %}↑{% else %}↓{% endif %}</span>
-                                {% endif %}
-                            </th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100"
-                                data-column="branch_code">
-                                Branch Code
-                                {% if sort_by == 'branch_code' %}
-                                <span class="ml-1">{% if sort_order == 'asc' %}↑{% else %}↓{% endif %}</span>
-                                {% endif %}
-                            </th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100"
-                                data-column="branch_name">
-                                Branch Name
-                                {% if sort_by == 'branch_name' %}
-                                <span class="ml-1">{% if sort_order == 'asc' %}↑{% else %}↓{% endif %}</span>
-                                {% endif %}
-                            </th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100"
-                                data-column="category_code">
-                                Category Code
-                                {% if sort_by == 'category_code' %}
-                                <span class="ml-1">{% if sort_order == 'asc' %}↑{% else %}↓{% endif %}</span>
-                                {% endif %}
-                            </th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100"
-                                data-column="category">
-                                Category
-                                {% if sort_by == 'category' %}
-                                <span class="ml-1">{% if sort_order == 'asc' %}↑{% else %}↓{% endif %}</span>
-                                {% endif %}
-                            </th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100"
-                                data-column="quota_type">
-                                Quota Type
-                                {% if sort_by == 'quota_type' %}
-                                <span class="ml-1">{% if sort_order == 'asc' %}↑{% else %}↓{% endif %}</span>
-                                {% endif %}
-                            </th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100"
-                                data-column="allocation_type">
-                                Allocation Type
-                                {% if sort_by == 'allocation_type' %}
-                                <span class="ml-1">{% if sort_order == 'asc' %}↑{% else %}↓{% endif %}</span>
-                                {% endif %}
-                            </th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100"
-                                data-column="rank">
-                                Rank
-                                {% if sort_by == 'rank' %}
-                                <span class="ml-1">{% if sort_order == 'asc' %}↑{% else %}↓{% endif %}</span>
-                                {% endif %}
-                            </th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable cursor-pointer hover:bg-gray-100"
-                                data-column="percentile">
-                                Percentile
-                                {% if sort_by == 'percentile' %}
-                                <span class="ml-1">{% if sort_order == 'asc' %}↑{% else %}↓{% endif %}</span>
-                                {% endif %}
-                            </th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">College Code</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">College Name</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Branch Code</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Branch Name</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category Code</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quota Type</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Allocation Type</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Percentile</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for result in results %}
                         <tr class="hover:bg-gray-50">
-                            <td class="px-3 py-2 text-xs whitespace-nowrap">{{ result.college_code }}</td>
+                            <td class="px-3 py-2 text-xs">{{ result.college_code }}</td>
                             <td class="px-3 py-2 text-xs">{{ result.college_name }}</td>
                             <td class="px-3 py-2 text-xs">{{ result.branch_code }}</td>
                             <td class="px-3 py-2 text-xs">{{ result.branch_name }}</td>
@@ -273,69 +123,6 @@
                         {% endfor %}
                     </tbody>
                 </table>
-
-                <!-- Pagination -->
-                <div class="px-4 py-3 flex items-center justify-between border-t border-gray-200">
-                    <div class="flex-1 flex justify-between sm:hidden">
-                        {% if current_page > 1 %}
-                        <button onclick="changePage({{ current_page - 1 }})" 
-                                class="px-4 py-2 border rounded-md text-sm text-blue-600 hover:bg-blue-50">
-                            Previous
-                        </button>
-                        {% endif %}
-                        {% if current_page < total_pages %}
-                        <button onclick="changePage({{ current_page + 1 }})" 
-                                class="px-4 py-2 border rounded-md text-sm text-blue-600 hover:bg-blue-50">
-                            Next
-                        </button>
-                        {% endif %}
-                    </div>
-                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                        <div>
-                            <p class="text-sm text-gray-700">
-                                Showing page {{ current_page }} of {{ total_pages }}
-                                <span class="font-medium">({{ stats.total_matches }} total results)</span>
-                            </p>
-                        </div>
-                        <div>
-                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                {% if current_page > 1 %}
-                                <button onclick="changePage(1)" 
-                                        class="px-3 py-2 rounded-l-md border text-sm font-medium text-blue-600 hover:bg-blue-50">
-                                    First
-                                </button>
-                                <button onclick="changePage({{ current_page - 1 }})" 
-                                        class="px-3 py-2 border text-sm font-medium text-blue-600 hover:bg-blue-50">
-                                    Previous
-                                </button>
-                                {% endif %}
-
-                                {% for p in range(max(1, current_page - 2), min(total_pages + 1, current_page + 3)) %}
-                                <button onclick="changePage({{ p }})"
-                                        class="px-3 py-2 border text-sm font-medium 
-                                               {% if p == current_page %}
-                                               bg-blue-50 border-blue-500 text-blue-600
-                                               {% else %}
-                                               text-gray-500 hover:bg-gray-50
-                                               {% endif %}">
-                                    {{ p }}
-                                </button>
-                                {% endfor %}
-
-                                {% if current_page < total_pages %}
-                                <button onclick="changePage({{ current_page + 1 }})" 
-                                        class="px-3 py-2 border text-sm font-medium text-blue-600 hover:bg-blue-50">
-                                    Next
-                                </button>
-                                <button onclick="changePage({{ total_pages }})" 
-                                        class="px-3 py-2 rounded-r-md border text-sm font-medium text-blue-600 hover:bg-blue-50">
-                                    Last
-                                </button>
-                                {% endif %}
-                            </nav>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Disclaimer -->
@@ -345,7 +132,7 @@
                         <span class="text-yellow-400">⚠️</span>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm text-gray-600">
+                        <p class="text-xs text-gray-600">
                             Disclaimer: The above data is for reference purposes only. Actual cutoff ranks may vary based on various factors
                             including seat availability, number of applications, and other admission criteria. Please verify the information
                             from official sources before making any decisions.
@@ -371,70 +158,5 @@
         </div>
         {% endif %}
     </div>
-
-    <script>
-    $(document).ready(function() {
-        // Initialize Select2 for multiple select
-        $('.select2').select2({
-            placeholder: "Select options",
-            allowClear: true
-        });
-
-        // Initialize Select2 for college search with AJAX
-        $('.select2-college').select2({
-            placeholder: "Search for a college",
-            allowClear: true,
-            minimumInputLength: 3,
-            ajax: {
-                url: '/api/colleges',
-                dataType: 'json',
-                delay: 250,
-                data: function(params) {
-                    return {
-                        search: params.term
-                    };
-                },
-                processResults: function(data) {
-                    return {
-                        results: data.colleges.map(function(college) {
-                            return {
-                                id: college,
-                                text: college
-                            };
-                        })
-                    };
-                },
-                cache: true
-            }
-        });
-
-        // Handle sorting
-        $('.sortable').click(function() {
-            const column = $(this).data('column');
-            const currentSortBy = $('input[name="sort_by"]').val();
-            const currentSortOrder = $('input[name="sort_order"]').val();
-            
-            let newSortOrder = 'asc';
-            if (column === currentSortBy && currentSortOrder === 'asc') {
-                newSortOrder = 'desc';
-            }
-            
-            $('input[name="sort_by"]').val(column);
-            $('input[name="sort_order"]').val(newSortOrder);
-            $('#searchForm').submit();
-        });
-    });
-
-    function changePage(page) {
-        $('input[name="page"]').val(page);
-        $('#searchForm').submit();
-    }
-
-    function exportToExcel() {
-        const table = document.querySelector('table');
-        const wb = XLSX.utils.table_to_book(table, {sheet: "Colleges"});
-        XLSX.writeFile(wb, 'mhtcet_colleges.xlsx');
-    }
-    </script>
 </body>
 </html>
