@@ -314,5 +314,11 @@ with gr.Blocks(theme=gr.themes.Soft()) as iface:
         outputs=output
     )
 
-# Launch the interface
-iface.launch(share=True)
+import os
+
+# Get the port number from Render (it provides PORT as an environment variable)
+port = int(os.getenv("PORT", 8080))
+
+# Launch Gradio with explicit server name and port
+iface.launch(server_name="0.0.0.0", server_port=port)
+
