@@ -47,7 +47,7 @@ async def search_colleges(
     branch: str = Form(default="All")
 ):
     try:
-        mask = (df['rank'] >= rank - 1000) & (df['rank'] <= rank + 1000)
+        mask = (df['rank'] >= rank - 1000) & (df['rank'] <= rank + 3000)
 
         if category != "All":
             mask &= df['category'] == category
