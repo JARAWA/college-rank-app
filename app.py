@@ -18,7 +18,7 @@ csv_path = "Structured_MHTCET_Cutoffs_with_validation.csv"
 
 # Check if the file exists before reading
 if os.path.exists(csv_path):
-    df = pd.read_csv(csv_path, encoding="ISO-8859-1")
+    df = pd.read_csv(csv_path, encoding='cp1252')
 else:
     raise FileNotFoundError(f"CSV file not found at {csv_path}")
 
