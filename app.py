@@ -1,9 +1,9 @@
-from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import pandas as pd
-from typing import Optional
+import os
 
 app = FastAPI()
 
@@ -14,12 +14,17 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # Load data
-df = pd.read_csv('Structured_MHTCET_Cutoffs_with_validation.csv', encoding='cp1252')
-
-# Get unique values
-categories = ["All"] + sorted([str(x) for x in df['category'].unique() if str(x) != 'nan' and str(x) != 'Not Specified'])
-quotas = ["All"] + sorted([str(x) for x in df['quota_type'].unique() if str(x) != 'nan' and str(x) != 'Not Specified'])
-branches = ["All"] + sorted([str(x) for x in df['branch_name'].unique() if str(x) != 'nan' and str(x) != 'Not Specified'])
+try:
+    df = pd.read_csv('Structured_MHTCET_Cutoffs_with_validation.csv', encoding='cp1252')
+    # Get unique values
+    categories = ["All"] + sorted([str(x) for x in df['category'].unique() if str(x) != 'nan' and str(x) != 'Not Specified'])
+    quotas = ["All"] + sorted([str(x) for x in df['quota_type'].unique() if str(x) != 'nan' and str(x) != 'Not Specified'])
+    branches = ["All"] + sorted([str(x) for x in df['branch_name'].unique() if str(x) != 'nan' and str(x) != 'Not Specified'])
+except Exception as e:
+    print(f"Error loading data: {e}")
+    categories = ["All"]
+    quotas = ["All"]
+    branches = ["All"]
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -78,3 +83,7 @@ async def search_colleges(
                 "error": str(e)
             }
         )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
