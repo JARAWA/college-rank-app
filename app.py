@@ -7,9 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1YL-ZnaUUeg5-bauid1wJQG1JWBSWGIgu
 """
 
-# Install required libraries
-!pip install pandas gradio
-
 import pandas as pd
 import gradio as gr
 
