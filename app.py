@@ -1,58 +1,87 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Form
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 import pandas as pd
+from pathlib import Path
 import os
-import uvicorn
 
-# Initialize FastAPI app
+# Create necessary directories
+Path("templates").mkdir(exist_ok=True)
+Path("static/css").mkdir(parents=True, exist_ok=True)
+Path("static/js").mkdir(parents=True, exist_ok=True)
+
 app = FastAPI()
 
-# Load the CSV file
-csv_path = "Structured_MHTCET_Cutoffs_with_validation.csv"
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-if os.path.exists(csv_path):
-    df = pd.read_csv(csv_path, encoding="ISO-8859-1")
-else:
-    raise FileNotFoundError(f"CSV file not found at {csv_path}")
+# Templates
+templates = Jinja2Templates(directory="templates")
 
-@app.get("/")
-def home():
-    return {"message": "Welcome to the MHTCET College Finder API!"}
+# Load data - Update the path to your CSV file
+csv_path = os.path.join(os.path.dirname(__file__), 'Structured_MHTCET_Cutoffs_with_validation.csv')
+df = pd.read_csv(csv_path, encoding='cp1252')
 
-@app.get("/find_colleges")
-def find_colleges(rank: int, category: str = None, quota: str = None, branch: str = None):
-    """
-    Endpoint to find colleges based on rank, category, quota, and branch.
+# Get unique values
+categories = ["All"] + sorted([str(x) for x in df['category'].unique() if str(x) != 'nan' and str(x) != 'Not Specified'])
+quotas = ["All"] + sorted([str(x) for x in df['quota_type'].unique() if str(x) != 'nan' and str(x) != 'Not Specified'])
+branches = ["All"] + sorted([str(x) for x in df['branch_name'].unique() if str(x) != 'nan' and str(x) != 'Not Specified'])
 
-    Parameters:
-    - rank (int): User's MHTCET rank (required)
-    - category (str): Category filter (optional)
-    - quota (str): Quota type filter (optional)
-    - branch (str): Branch filter (optional)
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "categories": categories,
+            "quotas": quotas,
+            "branches": branches
+        }
+    )
 
-    Returns:
-    - JSON list of matching colleges
-    """
+@app.post("/search")
+async def search_colleges(
+    request: Request,
+    rank: int = Form(...),
+    category: str = Form("All"),
+    quota: str = Form("All"),
+    branch: str = Form("All")
+):
+    try:
+        mask = (df['rank'] >= rank - 1000) & (df['rank'] <= rank + 1000)
 
-    if rank <= 0:
-        return {"error": "Please enter a valid rank (greater than 0)"}
+        if category != "All":
+            mask &= df['category'] == category
+        if quota != "All":
+            mask &= df['quota_type'] == quota
+        if branch != "All":
+            mask &= df['branch_name'] == branch
 
-    # Filter colleges within ±1000 rank range
-    mask = (df["rank"] >= rank - 1000) & (df["rank"] <= rank + 1000)
-
-    if category and category.lower() != "all":
-        mask &= df["category"].str.lower() == category.lower()
-    if quota and quota.lower() != "all":
-        mask &= df["quota_type"].str.lower() == quota.lower()
-    if branch and branch.lower() != "all":
-        mask &= df["branch_name"].str.lower() == branch.lower()
-
-    results = df[mask].sort_values("rank")
-
-    if results.empty:
-        return {"message": "No colleges found matching your criteria."}
-
-    return results.to_dict(orient="records")
-
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+        results = df[mask].sort_values('rank')
+        
+        return templates.TemplateResponse(
+            "index.html",
+            {
+                "request": request,
+                "categories": categories,
+                "quotas": quotas,
+                "branches": branches,
+                "results": results.to_dict('records'),
+                "total_matches": len(results),
+                "rank_min": results['rank'].min() if not results.empty else 0,
+                "rank_max": results['rank'].max() if not results.empty else 0,
+                "unique_colleges": results['college_name'].nunique() if not results.empty else 0
+            }
+        )
+    except Exception as e:
+        return templates.TemplateResponse(
+            "index.html",
+            {
+                "request": request,
+                "categories": categories,
+                "quotas": quotas,
+                "branches": branches,
+                "error": str(e)
+            }
+        )
