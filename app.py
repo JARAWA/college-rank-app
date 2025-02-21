@@ -11,7 +11,17 @@ import pandas as pd
 import gradio as gr
 
 # Load the data
-df = pd.read_csv('/content/Structured_MHTCET_Cutoffs_with_validation.csv', encoding='cp1252')
+import os
+
+# Use relative path (assuming the CSV is in the same directory as app.py)
+csv_path = "Structured_MHTCET_Cutoffs_with_validation.csv"
+
+# Check if the file exists before reading
+if os.path.exists(csv_path):
+    df = pd.read_csv(csv_path)
+else:
+    raise FileNotFoundError(f"CSV file not found at {csv_path}")
+
 
 # Convert all categories to strings and handle NaN values
 df['category'] = df['category'].fillna('Not Specified').astype(str)
