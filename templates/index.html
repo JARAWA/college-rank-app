@@ -1,145 +1,162 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MHTCET 2025 College Finder</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow">
+        <div class="container mx-auto px-4 py-3">
+            <h1 class="text-xl font-bold text-blue-600">MHTCET 2025 College Finder</h1>
+        </div>
+    </nav>
 
-{% block content %}
-<nav class="navbar">
-    <div class="container mx-auto px-4 py-3">
-        <h1 class="text-2xl font-bold text-primary">MHTCET 2025 College Finder</h1>
-    </div>
-</nav>
+    <div class="container mx-auto px-4 py-6">
+        <!-- Search Form -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <form method="POST" action="/search" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Rank</label>
+                        <input type="number" 
+                               name="rank" 
+                               min="1" 
+                               required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Category</label>
+                        <select name="category" 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="All">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-<div class="container mx-auto px-4 py-8">
-    <!-- Search Form -->
-    <div class="search-form mb-8">
-        <form method="POST" action="/search" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Rank</label>
-                    <input type="number" 
-                           name="rank" 
-                           min="1" 
-                           required
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Quota</label>
+                        <select name="quota" 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="All">All Quotas</option>
+                            {% for quota in quotas %}
+                            <option value="{{ quota }}">{{ quota }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Branch</label>
+                        <select name="branch" 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="All">All Branches</option>
+                            {% for branch in branches %}
+                            <option value="{{ branch }}">{{ branch }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Category</label>
-                    <select name="category" 
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="All">All Categories</option>
-                        {% for category in categories %}
-                        <option value="{{ category }}">{{ category }}</option>
+
+                <div class="flex justify-center">
+                    <button type="submit" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        Search Colleges
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Section -->
+        {% if results %}
+        <div class="space-y-6">
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="text-sm text-gray-600">Total Matches</div>
+                    <div class="text-xl font-bold text-blue-600">{{ total_matches }}</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="text-sm text-gray-600">Rank Range</div>
+                    <div class="text-xl font-bold text-blue-600">{{ rank_min }} - {{ rank_max }}</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="text-sm text-gray-600">Unique Colleges</div>
+                    <div class="text-xl font-bold text-blue-600">{{ unique_colleges }}</div>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="bg-white rounded-lg shadow overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">College Code</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">College Name</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Branch Code</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Branch Name</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category Code</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quota Type</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Allocation Type</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Percentile</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for result in results %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-2 text-xs">{{ result.college_code }}</td>
+                            <td class="px-3 py-2 text-xs">{{ result.college_name }}</td>
+                            <td class="px-3 py-2 text-xs">{{ result.branch_code }}</td>
+                            <td class="px-3 py-2 text-xs">{{ result.branch_name }}</td>
+                            <td class="px-3 py-2 text-xs">{{ result.category_code }}</td>
+                            <td class="px-3 py-2 text-xs">{{ result.category }}</td>
+                            <td class="px-3 py-2 text-xs">{{ result.quota_type }}</td>
+                            <td class="px-3 py-2 text-xs">{{ result.allocation_type }}</td>
+                            <td class="px-3 py-2 text-xs">{{ result.rank }}</td>
+                            <td class="px-3 py-2 text-xs">{{ result.percentile }}</td>
+                        </tr>
                         {% endfor %}
-                    </select>
-                </div>
+                    </tbody>
+                </table>
+            </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Quota</label>
-                    <select name="quota" 
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="All">All Quotas</option>
-                        {% for quota in quotas %}
-                        <option value="{{ quota }}">{{ quota }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Branch</label>
-                    <select name="branch" 
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="All">All Branches</option>
-                        {% for branch in branches %}
-                        <option value="{{ branch }}">{{ branch }}</option>
-                        {% endfor %}
-                    </select>
+            <!-- Disclaimer -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <span class="text-yellow-400">⚠️</span>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-xs text-gray-600">
+                            Disclaimer: The above data is for reference purposes only. Actual cutoff ranks may vary based on various factors
+                            including seat availability, number of applications, and other admission criteria. Please verify the information
+                            from official sources before making any decisions.
+                        </p>
+                    </div>
                 </div>
             </div>
+        </div>
+        {% endif %}
 
-            <div class="flex justify-center space-x-4 mt-6">
-                <button type="submit" 
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                    Search Colleges
-                </button>
+        {% if error %}
+        <div class="mt-4 bg-red-50 border-l-4 border-red-400 p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-red-700">{{ error }}</p>
+                </div>
             </div>
-        </form>
+        </div>
+        {% endif %}
     </div>
-
-    <!-- Results Section -->
-    {% if results %}
-    <div class="mt-8">
-        <div class="flex justify-end mb-4">
-            <button onclick="exportToExcel()" 
-                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                Export Results
-            </button>
-        </div>
-        
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-lg shadow">
-                <div class="text-sm text-gray-600">Total Matches</div>
-                <div class="text-2xl font-bold text-blue-600">{{ total_matches }}</div>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <div class="text-sm text-gray-600">Rank Range</div>
-                <div class="text-2xl font-bold text-blue-600">{{ rank_min }} - {{ rank_max }}</div>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <div class="text-sm text-gray-600">Unique Colleges</div>
-                <div class="text-2xl font-bold text-blue-600">{{ unique_colleges }}</div>
-            </div>
-        </div>
-
-        <!-- Results Table -->
-        <div class="overflow-x-auto bg-white rounded-lg shadow">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">College Code</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">College Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quota</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for result in results %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">{{ result.college_code }}</td>
-                        <td class="px-6 py-4">{{ result.college_name }}</td>
-                        <td class="px-6 py-4">{{ result.branch_name }}</td>
-                        <td class="px-6 py-4">{{ result.category }}</td>
-                        <td class="px-6 py-4">{{ result.quota_type }}</td>
-                        <td class="px-6 py-4">{{ result.rank }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
-
-    {% if error %}
-    <div class="mt-4 bg-red-50 border-l-4 border-red-400 p-4">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                </svg>
-            </div>
-            <div class="ml-3">
-                <p class="text-sm text-red-700">{{ error }}</p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-</div>
-
-<script>
-function exportToExcel() {
-    // Add export functionality here
-    alert('Export feature coming soon!');
-}
-</script>
-{% endblock %}
+</body>
+</html>
