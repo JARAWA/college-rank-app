@@ -1,15 +1,9 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import pandas as pd
-from pathlib import Path
-import os
-
-# Create necessary directories
-Path("templates").mkdir(exist_ok=True)
-Path("static/css").mkdir(parents=True, exist_ok=True)
-Path("static/js").mkdir(parents=True, exist_ok=True)
+from typing import Optional
 
 app = FastAPI()
 
@@ -19,9 +13,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Templates
 templates = Jinja2Templates(directory="templates")
 
-# Load data - Update the path to your CSV file
-csv_path = os.path.join(os.path.dirname(__file__), 'Structured_MHTCET_Cutoffs_with_validation.csv')
-df = pd.read_csv(csv_path, encoding='cp1252')
+# Load data
+df = pd.read_csv('Structured_MHTCET_Cutoffs_with_validation.csv', encoding='cp1252')
 
 # Get unique values
 categories = ["All"] + sorted([str(x) for x in df['category'].unique() if str(x) != 'nan' and str(x) != 'Not Specified'])
@@ -44,9 +37,9 @@ async def home(request: Request):
 async def search_colleges(
     request: Request,
     rank: int = Form(...),
-    category: str = Form("All"),
-    quota: str = Form("All"),
-    branch: str = Form("All")
+    category: str = Form(default="All"),
+    quota: str = Form(default="All"),
+    branch: str = Form(default="All")
 ):
     try:
         mask = (df['rank'] >= rank - 1000) & (df['rank'] <= rank + 1000)
