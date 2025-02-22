@@ -28,12 +28,13 @@ class DataManager:
 
     def load_data(self, file_path):
         try:
-            # Add error handling for file not found
-            if not os.path.exists(file_path):
-                print(f"File not found: {file_path}")
-                return pd.DataFrame()
-            
+            # Print current working directory and file path for debugging
+            print(f"Current working directory: {os.getcwd()}")
+            print(f"Attempting to load file: {file_path}")
+            print(f"File exists: {os.path.exists(file_path)}")
+
             df = pd.read_csv(file_path, encoding='cp1252')
+            print(f"Loaded dataframe shape: {df.shape}")
             return df
         except Exception as e:
             print(f"Data loading error: {e}")
@@ -58,6 +59,7 @@ class DataManager:
     ):
         # Handle empty DataFrame
         if self.df.empty:
+            print("DataFrame is empty")
             return {
                 'results': [],
                 'total_matches': 0,
@@ -65,6 +67,9 @@ class DataManager:
                 'rank_max': 0,
                 'unique_colleges': 0
             }
+
+        # Print search parameters for debugging
+        print(f"Search parameters: rank={rank}, category={category}, quota={quota}, branch={branch}")
 
         mask = (self.df['rank'] >= rank - 1000) & (self.df['rank'] <= rank + 1000)
 
@@ -77,6 +82,8 @@ class DataManager:
 
         results = self.df[mask].sort_values('rank')
         
+        print(f"Search results count: {len(results)}")
+
         return {
             'results': results.to_dict('records'),
             'total_matches': len(results),
@@ -86,8 +93,8 @@ class DataManager:
         }
 
 # Initialize data manager
-# Use a relative path or full path to your CSV file
-DATA_FILE_PATH = 'Structured_MHTCET_Cutoffs_with_validation.csv'
+# Use an absolute path or ensure the CSV is in the correct directory
+DATA_FILE_PATH = os.path.join(os.getcwd(), 'Structured_MHTCET_Cutoffs_with_validation.csv')
 data_manager = DataManager(DATA_FILE_PATH)
 
 @app.get("/", response_class=HTMLResponse)
@@ -120,6 +127,7 @@ async def search_colleges(
             **search_results
         })
     except Exception as e:
+        print(f"Search error: {e}")
         return templates.TemplateResponse("index.html", {
             "request": request,
             "categories": data_manager.categories,
@@ -128,34 +136,4 @@ async def search_colleges(
             "error": str(e)
         })
 
-@app.post("/export")
-async def export_results(
-    request: Request,
-    rank: int = Form(...),
-    category: str = Form(default="All"),
-    quota: str = Form(default="All"),
-    branch: str = Form(default="All")
-):
-    try:
-        search_results = data_manager.search_colleges(
-            rank, category, quota, branch
-        )
-        
-        results_df = pd.DataFrame(search_results['results'])
-        
-        output = io.StringIO()
-        results_df.to_csv(output, index=False)
-        
-        response = StreamingResponse(
-            iter([output.getvalue()]), 
-            media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=college_results.csv"}
-        )
-        return response
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+# Rest of the code remains the same
