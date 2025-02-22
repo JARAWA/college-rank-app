@@ -1,10 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize components
     initializeForm();
     initializeToasts();
     setupEventListeners();
+    initializeDarkMode();
 });
 
+// Form Handling
 function initializeForm() {
     const searchForm = document.getElementById('searchForm');
     if (searchForm) {
@@ -23,15 +24,14 @@ async function handleFormSubmit(event) {
         // Show loading state
         submitButton.disabled = true;
         submitButton.innerHTML = `
-            <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+            <svg class="animate-spin h-5 w-5 mr-3 inline" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             Searching...
         `;
         
-        // Show loading overlay
-        document.body.classList.add('loading');
+        showLoadingOverlay();
         
         const formData = new FormData(form);
         const response = await fetch(form.action, {
@@ -54,75 +54,74 @@ async function handleFormSubmit(event) {
         console.error('Search error:', error);
         showToast('Failed to search colleges. Please try again.', 'error');
     } finally {
-        // Reset button state
         submitButton.disabled = false;
         submitButton.innerHTML = originalButtonText;
-        
-        // Hide loading overlay
-        document.body.classList.remove('loading');
+        hideLoadingOverlay();
     }
 }
 
-function initializeToasts() {
-    // Create toast container if it doesn't exist
-    if (!document.getElementById('toast-container')) {
-        const toastContainer = document.createElement('div');
-        toastContainer.id = 'toast-container';
-        toastContainer.className = 'fixed bottom-4 right-4 z-50';
-        document.body.appendChild(toastContainer);
-    }
+// Table Sorting
+function sortTable() {
+    const field = document.getElementById('sortField').value;
+    const order = document.getElementById('sortOrder').value;
+    const tbody = document.querySelector('table tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    rows.sort((a, b) => {
+        let aValue = getCellValue(a, field);
+        let bValue = getCellValue(b, field);
+
+        if (isNumeric(aValue) && isNumeric(bValue)) {
+            aValue = parseFloat(aValue);
+            bValue = parseFloat(bValue);
+        }
+
+        if (order === 'asc') {
+            return aValue > bValue ? 1 : -1;
+        } else {
+            return aValue < bValue ? 1 : -1;
+        }
+    });
+
+    tbody.innerHTML = '';
+    rows.forEach(row => tbody.appendChild(row));
 }
 
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    
-    const colors = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        info: 'bg-blue-500',
-        warning: 'bg-yellow-500'
+function getCellValue(row, field) {
+    const cellMap = {
+        'college_name': 0,
+        'branch_name': 1,
+        'category': 2,
+        'quota_type': 3,
+        'rank': 4,
+        'percentile': 4
     };
-    
-    toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg mb-2 animate-fade-in`;
-    toast.textContent = message;
-    
-    container.appendChild(toast);
-    
-    // Remove toast after 3 seconds
-    setTimeout(() => {
-        toast.classList.add('animate-fade-out');
-        setTimeout(() => container.removeChild(toast), 300);
-    }, 3000);
-}
 
-function setupEventListeners() {
-    // Export button handler
-    const exportButton = document.getElementById('exportResultsBtn');
-    if (exportButton) {
-        exportButton.addEventListener('click', handleExport);
+    const cell = row.querySelector(`td:nth-child(${cellMap[field] + 1})`);
+    let value = cell.textContent.trim();
+
+    if (field === 'rank') {
+        value = value.match(/Rank: (\d+)/)[1];
+    } else if (field === 'percentile') {
+        value = value.match(/Percentile: ([\d.]+)/)[1];
+    } else {
+        value = cell.querySelector('.text-sm').textContent.trim();
     }
-    
-    // Sort handlers
-    const sortButtons = document.querySelectorAll('[data-sort]');
-    sortButtons.forEach(button => {
-        button.addEventListener('click', handleSort);
-    });
-    
-    // Filter handlers
-    const filterInputs = document.querySelectorAll('[data-filter]');
-    filterInputs.forEach(input => {
-        input.addEventListener('input', debounce(handleFilter, 300));
-    });
+
+    return value;
 }
 
-async function handleExport() {
+// Export Functionality
+async function exportToCSV() {
     try {
         showToast('Preparing export...', 'info');
         
+        const form = document.getElementById('searchForm');
+        const formData = new FormData(form);
+        
         const response = await fetch('/export', {
             method: 'POST',
-            body: new FormData(document.getElementById('searchForm'))
+            body: formData
         });
         
         if (!response.ok) throw new Error('Export failed');
@@ -143,47 +142,81 @@ async function handleExport() {
     }
 }
 
-function handleSort(event) {
-    const column = event.target.dataset.sort;
-    const currentOrder = event.target.dataset.order || 'asc';
-    const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-    
-    // Update sort indicators
-    document.querySelectorAll('[data-sort]').forEach(el => {
-        el.dataset.order = el === event.target ? newOrder : '';
-    });
-    
-    sortTable(column, newOrder);
+// Toast Notifications
+function initializeToasts() {
+    if (!document.getElementById('toast-container')) {
+        const container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'fixed bottom-4 right-4 z-50 space-y-2';
+        document.body.appendChild(container);
+    }
 }
 
-function sortTable(column, order) {
-    const table = document.querySelector('table');
-    const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
     
-    rows.sort((a, b) => {
-        const aValue = a.querySelector(`td[data-column="${column}"]`).textContent;
-        const bValue = b.querySelector(`td[data-column="${column}"]`).textContent;
-        
-        return order === 'asc' 
-            ? aValue.localeCompare(bValue, undefined, {numeric: true})
-            : bValue.localeCompare(aValue, undefined, {numeric: true});
+    const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+        warning: 'bg-yellow-500'
+    };
+    
+    toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg flex items-center`;
+    
+    const icons = {
+        success: '<i class="fas fa-check-circle mr-2"></i>',
+        error: '<i class="fas fa-exclamation-circle mr-2"></i>',
+        info: '<i class="fas fa-info-circle mr-2"></i>',
+        warning: '<i class="fas fa-exclamation-triangle mr-2"></i>'
+    };
+    
+    toast.innerHTML = `${icons[type]}<span>${message}</span>`;
+    
+    container.appendChild(toast);
+    
+    // Animate in
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(1rem)';
+    requestAnimationFrame(() => {
+        toast.style.transition = 'all 0.3s ease';
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
     });
     
-    tbody.innerHTML = '';
-    rows.forEach(row => tbody.appendChild(row));
+    // Remove after delay
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(1rem)';
+        setTimeout(() => container.removeChild(toast), 300);
+    }, 3000);
 }
 
-function handleFilter(event) {
-    const column = event.target.dataset.filter;
-    const value = event.target.value.toLowerCase();
-    
-    const rows = document.querySelectorAll('tbody tr');
-    rows.forEach(row => {
-        const cell = row.querySelector(`td[data-column="${column}"]`);
-        const text = cell.textContent.toLowerCase();
-        row.style.display = text.includes(value) ? '' : 'none';
-    });
+// Loading Overlay
+function showLoadingOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'loading-overlay';
+    overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    overlay.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 flex items-center space-x-3">
+            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <span class="text-gray-700 dark:text-gray-300">Loading...</span>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function hideLoadingOverlay() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+// Utility Functions
+function isNumeric(value) {
+    return !isNaN(parseFloat(value)) && isFinite(value);
 }
 
 function debounce(func, wait) {
@@ -198,7 +231,51 @@ function debounce(func, wait) {
     };
 }
 
-// Dark mode toggle
-if (localStorage.getItem('darkMode') === 'true') {
-    document.documentElement.classList.add('dark');
+// Event Listeners
+function setupEventListeners() {
+    // Sort controls
+    const sortField = document.getElementById('sortField');
+    const sortOrder = document.getElementById('sortOrder');
+    if (sortField && sortOrder) {
+        sortField.addEventListener('change', sortTable);
+        sortOrder.addEventListener('change', sortTable);
+    }
+
+    // Form inputs
+    const formInputs = document.querySelectorAll('input, select');
+    formInputs.forEach(input => {
+        input.addEventListener('change', debounce(() => {
+            localStorage.setItem(`form_${input.id}`, input.value);
+        }, 500));
+    });
 }
+
+// Dark Mode
+function initializeDarkMode() {
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    if (darkMode) {
+        document.documentElement.classList.add('dark');
+    }
+
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        });
+    }
+}
+
+// Form State Persistence
+function restoreFormState() {
+    const formInputs = document.querySelectorAll('input, select');
+    formInputs.forEach(input => {
+        const savedValue = localStorage.getItem(`form_${input.id}`);
+        if (savedValue) {
+            input.value = savedValue;
+        }
+    });
+}
+
+// Initialize on load
+window.addEventListener('load', restoreFormState);
