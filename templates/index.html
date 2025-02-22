@@ -102,20 +102,39 @@
             </div>
         </div>
 
-        <!-- Export Button -->
-        <div class="flex justify-end">
-            <form action="{{ url_for('export_results') }}" method="POST">
-                <input type="hidden" name="rank" value="{{ rank }}">
-                <input type="hidden" name="category" value="{{ category }}">
-                <input type="hidden" name="quota" value="{{ quota }}">
-                <input type="hidden" name="branch" value="{{ branch }}">
+        <!-- Controls -->
+        <div class="flex flex-wrap gap-4 justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+            <!-- Sort Controls -->
+            <div class="flex flex-wrap items-center gap-2">
+                <label class="text-sm text-gray-600 dark:text-gray-400">Sort by:</label>
+                <select id="sortField" class="text-sm border rounded-md px-2 py-1 dark:bg-gray-700 dark:border-gray-600">
+                    <option value="college_name">College Name</option>
+                    <option value="branch_name">Branch Name</option>
+                    <option value="category">Category</option>
+                    <option value="quota_type">Quota</option>
+                    <option value="rank">Rank</option>
+                    <option value="percentile">Percentile</option>
+                </select>
+                <select id="sortOrder" class="text-sm border rounded-md px-2 py-1 dark:bg-gray-700 dark:border-gray-600">
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                </select>
                 <button 
-                    type="submit"
-                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                    onclick="sortTable()"
+                    class="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600"
                 >
-                    <i class="fas fa-download mr-2"></i> Export Results
+                    Sort
                 </button>
-            </form>
+            </div>
+
+            <!-- Export Button -->
+            <button 
+                onclick="exportToCSV()"
+                class="bg-green-500 text-white px-4 py-2 rounded-md text-sm hover:bg-green-600 flex items-center"
+            >
+                <i class="fas fa-download mr-2"></i>
+                Export Results
+            </button>
         </div>
 
         <!-- Results Table -->
@@ -123,29 +142,60 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">College</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Branch</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quota</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rank</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Percentile</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            College Details
+                            <div class="text-xxs font-normal">Name & Code</div>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Branch Details
+                            <div class="text-xxs font-normal">Name & Code</div>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Category Details
+                            <div class="text-xxs font-normal">Name & Code</div>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Quota Details
+                            <div class="text-xxs font-normal">Type & Allocation</div>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Cutoff Details
+                            <div class="text-xxs font-normal">Rank & Percentile</div>
+                        </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     {% for result in results %}
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                            {{ result.college_name }}
+                        <!-- College Details -->
+                        <td class="px-4 py-3">
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ result.college_name }}</div>
                             <div class="text-xs text-gray-500">Code: {{ result.college_code }}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                            {{ result.branch_name }}
+                        
+                        <!-- Branch Details -->
+                        <td class="px-4 py-3">
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ result.branch_name }}</div>
                             <div class="text-xs text-gray-500">Code: {{ result.branch_code }}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{{ result.category }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{{ result.quota_type }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{{ result.rank }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{{ result.percentile }}</td>
+                        
+                        <!-- Category Details -->
+                        <td class="px-4 py-3">
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ result.category }}</div>
+                            <div class="text-xs text-gray-500">Code: {{ result.category_code }}</div>
+                        </td>
+                        
+                        <!-- Quota Details -->
+                        <td class="px-4 py-3">
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ result.quota_type }}</div>
+                            <div class="text-xs text-gray-500">{{ result.allocation_type }}</div>
+                        </td>
+                        
+                        <!-- Cutoff Details -->
+                        <td class="px-4 py-3">
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">Rank: {{ result.rank }}</div>
+                            <div class="text-xs text-gray-500">Percentile: {{ "%.2f"|format(result.percentile|float) }}</div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
