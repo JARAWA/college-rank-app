@@ -1,80 +1,83 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">MHTCET College Finder</h1>
+        <p class="text-gray-600 dark:text-gray-400">Find the best colleges based on your rank and preferences</p>
+    </div>
+
     <!-- Search Form -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <form id="searchForm" method="POST" action="/search" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+        <form id="searchForm" method="POST" action="{{ url_for('search_colleges') }}" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Rank Input -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Rank</label>
+                    <label for="rank" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rank</label>
                     <input 
                         type="number" 
                         name="rank" 
-                        id="rankInput"
-                        value="{{ request.query_params.get('rank', '') }}"
+                        id="rank"
+                        value="{{ rank if rank else '' }}"
                         min="1" 
                         required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        placeholder="Enter your rank"
                     >
                 </div>
-                
+
+                <!-- Category Select -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Category</label>
+                    <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                     <select 
                         name="category" 
-                        id="categorySelect"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        id="category"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
-                        <option value="All" {% if category == 'All' %}selected{% endif %}>All Categories</option>
                         {% for cat in categories %}
-                            {% if cat != 'All' %}
-                            <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
-                            {% endif %}
+                        <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
+                <!-- Quota Select -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Quota</label>
+                    <label for="quota" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quota</label>
                     <select 
                         name="quota" 
-                        id="quotaSelect"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        id="quota"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
-                        <option value="All" {% if quota == 'All' %}selected{% endif %}>All Quotas</option>
                         {% for q in quotas %}
-                            {% if q != 'All' %}
-                            <option value="{{ q }}" {% if quota == q %}selected{% endif %}>{{ q }}</option>
-                            {% endif %}
+                        <option value="{{ q }}" {% if quota == q %}selected{% endif %}>{{ q }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
+                <!-- Branch Select -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Branch</label>
+                    <label for="branch" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Branch</label>
                     <select 
                         name="branch" 
-                        id="branchSelect"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        id="branch"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
-                        <option value="All" {% if branch == 'All' %}selected{% endif %}>All Branches</option>
                         {% for b in branches %}
-                            {% if b != 'All' %}
-                            <option value="{{ b }}" {% if branch == b %}selected{% endif %}>{{ b }}</option>
-                            {% endif %}
+                        <option value="{{ b }}" {% if branch == b %}selected{% endif %}>{{ b }}</option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
 
+            <!-- Submit Button -->
             <div class="flex justify-center">
                 <button 
                     type="submit" 
                     id="searchButton"
-                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                    Search Colleges
+                    <span>Search Colleges</span>
                 </button>
             </div>
         </form>
@@ -85,80 +88,64 @@
     <div class="space-y-6">
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white p-4 rounded-lg shadow">
-                <div class="text-sm text-gray-600">Total Matches</div>
-                <div class="text-xl font-bold text-blue-600">{{ total_matches }}</div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                <div class="text-sm text-gray-600 dark:text-gray-400">Total Matches</div>
+                <div class="text-2xl font-bold text-blue-600">{{ total_matches }}</div>
             </div>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <div class="text-sm text-gray-600">Rank Range</div>
-                <div class="text-xl font-bold text-blue-600">{{ rank_min }} - {{ rank_max }}</div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                <div class="text-sm text-gray-600 dark:text-gray-400">Rank Range</div>
+                <div class="text-2xl font-bold text-blue-600">{{ rank_min }} - {{ rank_max }}</div>
             </div>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <div class="text-sm text-gray-600">Unique Colleges</div>
-                <div class="text-xl font-bold text-blue-600">{{ unique_colleges }}</div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                <div class="text-sm text-gray-600 dark:text-gray-400">Unique Colleges</div>
+                <div class="text-2xl font-bold text-blue-600">{{ unique_colleges }}</div>
             </div>
         </div>
 
-        <!-- Sorting and Export -->
-        <div class="flex justify-between items-center mb-4">
-            <div class="flex space-x-4">
-                <select id="sortColumn" class="rounded-md border-gray-300 shadow-sm">
-                    <option value="">Sort By</option>
-                    <option value="rank">Rank</option>
-                    <option value="college_name">College Name</option>
-                    <option value="branch_name">Branch</option>
-                    <option value="category">Category</option>
-                    <option value="quota_type">Quota</option>
-                </select>
-                <select id="sortOrder" class="rounded-md border-gray-300 shadow-sm">
-                    <option value="asc">Ascending</option>
-                    <option value="desc">Descending</option>
-                </select>
+        <!-- Export Button -->
+        <div class="flex justify-end">
+            <form action="{{ url_for('export_results') }}" method="POST">
+                <input type="hidden" name="rank" value="{{ rank }}">
+                <input type="hidden" name="category" value="{{ category }}">
+                <input type="hidden" name="quota" value="{{ quota }}">
+                <input type="hidden" name="branch" value="{{ branch }}">
                 <button 
-                    id="applySortBtn"
-                    class="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                    type="submit"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
                 >
-                    Apply Sort
+                    <i class="fas fa-download mr-2"></i> Export Results
                 </button>
-            </div>
-            <button 
-                id="exportResultsBtn"
-                class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-            >
-                Export Results
-            </button>
+            </form>
         </div>
 
         <!-- Results Table -->
-        <div class="bg-white rounded-lg shadow overflow-x-auto">
-            <table id="resultsTable" class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">College Code</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">College Name</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Branch Code</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Branch Name</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category Code</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quota Type</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Allocation Type</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Percentile</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">College</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Branch</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quota</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rank</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Percentile</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for result in results %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-3 py-2 text-xs">{{ result.college_code }}</td>
-                        <td class="px-3 py-2 text-xs">{{ result.college_name }}</td>
-                        <td class="px-3 py-2 text-xs">{{ result.branch_code }}</td>
-                        <td class="px-3 py-2 text-xs">{{ result.branch_name }}</td>
-                        <td class="px-3 py-2 text-xs">{{ result.category_code }}</td>
-                        <td class="px-3 py-2 text-xs">{{ result.category }}</td>
-                        <td class="px-3 py-2 text-xs">{{ result.quota_type }}</td>
-                        <td class="px-3 py-2 text-xs">{{ result.allocation_type }}</td>
-                        <td class="px-3 py-2 text-xs">{{ result.rank }}</td>
-                        <td class="px-3 py-2 text-xs">{{ result.percentile }}</td>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                            {{ result.college_name }}
+                            <div class="text-xs text-gray-500">Code: {{ result.college_code }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
+                            {{ result.branch_name }}
+                            <div class="text-xs text-gray-500">Code: {{ result.branch_code }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{{ result.category }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{{ result.quota_type }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{{ result.rank }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{{ result.percentile }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -167,108 +154,4 @@
     </div>
     {% endif %}
 </div>
-{% endblock %}
-
-{% block extra_scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchForm = document.getElementById('searchForm');
-    const sortColumn = document.getElementById('sortColumn');
-    const sortOrder = document.getElementById('sortOrder');
-    const applySortBtn = document.getElementById('applySortBtn');
-    const exportResultsBtn = document.getElementById('exportResultsBtn');
-    
-    // Search Form Submission
-    searchForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const searchButton = document.getElementById('searchButton');
-        searchButton.disabled = true;
-        searchButton.innerHTML = 'Searching...';
-
-        try {
-            const formData = new FormData(searchForm);
-            
-            const response = await fetch('/search', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                throw new Error('Search failed');
-            }
-
-            window.location.reload();
-        } catch (error) {
-            console.error('Search error:', error);
-            alert('Failed to search colleges. Please try again.');
-        } finally {
-            searchButton.disabled = false;
-            searchButton.innerHTML = 'Search Colleges';
-        }
-    });
-
-    // Sorting Functionality
-    if (applySortBtn) {
-        applySortBtn.addEventListener('click', function() {
-            const column = sortColumn.value;
-            const order = sortOrder.value;
-            
-            if (!column) {
-                alert('Please select a column to sort');
-                return;
-            }
-
-            sortTable(column, order);
-        });
-    }
-
-    function sortTable(column, order) {
-        const table = document.getElementById('resultsTable');
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-
-        rows.sort((a, b) => {
-            const aValue = a.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent;
-            const bValue = b.querySelector(`td:nth-child(${getColumnIndex(column)})`).textContent;
-
-            // Handle numeric and string sorting
-            if (!isNaN(aValue) && !isNaN(bValue)) {
-                return order === 'asc' 
-                    ? Number(aValue) - Number(bValue)
-                    : Number(bValue) - Number(aValue);
-            } else {
-                return order === 'asc'
-                    ? aValue.localeCompare(bValue)
-                    : bValue.localeCompare(aValue);
-            }
-        });
-
-        // Clear and repopulate tbody
-        tbody.innerHTML = '';
-        rows.forEach(row => tbody.appendChild(row));
-    }
-
-    function getColumnIndex(columnName) {
-        const columnMap = {
-            'rank': 9,
-            'college_name': 2,
-            'branch_name': 4,
-            'category': 6,
-            'quota_type': 7
-        };
-        return columnMap[columnName] || 1;
-    }
-
-    // Export Functionality
-    if (exportResultsBtn) {
-        exportResultsBtn.addEventListener('click', function() {
-            const table = document.getElementById('resultsTable');
-            const wb = XLSX.utils.table_to_book(table);
-            XLSX.writeFile(wb, 'college_results.xlsx');
-        });
-    }
-});
-</script>
 {% endblock %}
