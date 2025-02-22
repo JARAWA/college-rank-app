@@ -1,0 +1,26 @@
+# In your project directory, create a simple logo
+import base64
+import io
+from PIL import Image, ImageDraw, ImageFont
+
+def create_logo():
+    # Create a blank image
+    img = Image.new('RGB', (200, 200), color='#2563eb')
+    
+    # Create a drawing context
+    draw = ImageDraw.Draw(img)
+    
+    # Use a default font
+    try:
+        font = ImageFont.truetype("arial.ttf", 60)
+    except IOError:
+        font = ImageFont.load_default()
+    
+    # Draw text
+    draw.text((50, 70), "CF", fill='white', font=font)
+    
+    # Save the image
+    img.save("static/images/logo.png")
+
+# Run this once to create the logo
+create_logo()
