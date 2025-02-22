@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi import FastAPI, Request, Form, HTTPException, Header
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import numpy as np
@@ -146,7 +146,12 @@ except Exception as e:
     data_manager = None
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
+@app.head("/")
+async def home(request: Request, user_agent: str = Header(None)):
+    # Handle HEAD requests
+    if request.method == "HEAD":
+        return PlainTextResponse(status_code=200)
+
     if data_manager is None:
         return templates.TemplateResponse("error.html", {
             "request": request,
@@ -243,6 +248,14 @@ async def error_page(request: Request):
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "data_loaded": data_manager is not None}
+
+# Catch-all route to handle 404 errors
+@app.get("/{path:path}")
+async def catch_all(request: Request, path: str):
+    return templates.TemplateResponse("error.html", {
+        "request": request,
+        "error": f"Page not found: /{path}"
+    })
 
 if __name__ == "__main__":
     import uvicorn
