@@ -2,9 +2,7 @@ from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, StreamingResponse
-from typing import List, Optional
 import pandas as pd
-import numpy as np
 import os
 import io
 
@@ -14,7 +12,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Mount static files
+# Ensure static files are mounted correctly
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Templates
@@ -30,6 +28,11 @@ class DataManager:
 
     def load_data(self, file_path):
         try:
+            # Add error handling for file not found
+            if not os.path.exists(file_path):
+                print(f"File not found: {file_path}")
+                return pd.DataFrame()
+            
             df = pd.read_csv(file_path, encoding='cp1252')
             return df
         except Exception as e:
@@ -37,6 +40,10 @@ class DataManager:
             return pd.DataFrame()
 
     def prepare_dropdown(self, df, column):
+        # Handle empty DataFrame
+        if df.empty:
+            return ["All"]
+        
         return ["All"] + sorted([
             str(x) for x in df[column].unique() 
             if pd.notna(x) and str(x).lower() != 'not specified'
@@ -49,6 +56,16 @@ class DataManager:
         quota: str = "All", 
         branch: str = "All"
     ):
+        # Handle empty DataFrame
+        if self.df.empty:
+            return {
+                'results': [],
+                'total_matches': 0,
+                'rank_min': 0,
+                'rank_max': 0,
+                'unique_colleges': 0
+            }
+
         mask = (self.df['rank'] >= rank - 1000) & (self.df['rank'] <= rank + 1000)
 
         if category != "All":
@@ -69,7 +86,9 @@ class DataManager:
         }
 
 # Initialize data manager
-data_manager = DataManager('Structured_MHTCET_Cutoffs_with_validation.csv')
+# Use a relative path or full path to your CSV file
+DATA_FILE_PATH = 'Structured_MHTCET_Cutoffs_with_validation.csv'
+data_manager = DataManager(DATA_FILE_PATH)
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
