@@ -1,163 +1,126 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
-    const tooltips = document.querySelectorAll('[data-tooltip]');
-    tooltips.forEach(tooltip => {
-        new Tooltip(tooltip);
+// Alpine.js Component for College Search
+function collegeSearchForm() {
+    return {
+        formData: {
+            rank: null,
+            category: 'All',
+            quota: 'All',
+            branch: 'All'
+        },
+        isLoading: false,
+        searchResults: [],
+        error: null,
+
+        async searchColleges() {
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(this.formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+
+                const html = await response.text();
+                // Update page content with new results
+                document.getElementById('search-results-container').innerHTML = html;
+            } catch (error) {
+                this.error = error.message;
+                console.error('Search error:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async exportResults() {
+            try {
+                const response = await fetch('/export', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(this.formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'college_results.csv';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch (error) {
+                console.error('Export error:', error);
+            }
+        },
+
+        showCollegeDetails(collegeId) {
+            // Implement modal logic to show college details
+            const modal = document.querySelector('[x-data="{ isOpen: false, modalContent: \'\' }"]');
+            
+            // Fetch college details
+            fetch(`/api/college/${collegeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Populate modal content
+                    modal.querySelector('[x-html="modalContent"]').innerHTML = `
+                        <h2 class="text-xl font-bold mb-4">${data.name}</h2>
+                        <div class="space-y-2">
+                            <p><strong>Location:</strong> ${data.location}</p>
+                            <p><strong>Branch:</strong> ${data.branch}</p>
+                            <p><strong>Cutoff Rank:</strong> ${data.cutoffRank}</p>
+                        </div>
+                    `;
+                    
+                    // Open modal
+                    Alpine.store('modal').open();
+                });
+        }
+    };
+}
+
+// Global Alpine Store for Modal
+document.addEventListener('alpine:init', () => {
+    Alpine.store('modal', {
+        isOpen: false,
+        open() {
+            this.isOpen = true;
+        },
+        close() {
+            this.isOpen = false;
+        }
     });
-
-    // Handle college comparison
-    const compareCheckboxes = document.querySelectorAll('.compare-checkbox');
-    compareCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', handleCompareChange);
-    });
-
-    // Export results
-    const exportButton = document.getElementById('exportResults');
-    if (exportButton) {
-        exportButton.addEventListener('click', exportToExcel);
-    }
-
-    // Save favorites
-    const favoriteButtons = document.querySelectorAll('.favorite-btn');
-    favoriteButtons.forEach(btn => {
-        btn.addEventListener('click', toggleFavorite);
-    });
-
-    // Initialize college details modal
-    const collegeLinks = document.querySelectorAll('.college-details-link');
-    collegeLinks.forEach(link => {
-        link.addEventListener('click', showCollegeDetails);
-    });
-
-    // Search form handling
-    const searchForm = document.querySelector('#searchForm');
-    if (searchForm) {
-        searchForm.addEventListener('submit', handleSearch);
-    }
 });
 
-// College comparison handling
-function handleCompareChange(e) {
-    const selectedColleges = document.querySelectorAll('.compare-checkbox:checked');
-    const compareButton = document.getElementById('compareButton');
-    
-    if (selectedColleges.length > 1) {
-        compareButton.disabled = false;
-    } else {
-        compareButton.disabled = true;
-    }
-}
+// Theme Toggle
+function initThemeToggle() {
+    const themeToggle = document.getElementById('theme-toggle');
+    const htmlElement = document.documentElement;
 
-// Export to Excel functionality
-function exportToExcel() {
-    const table = document.querySelector('.custom-table');
-    const wb = XLSX.utils.table_to_book(table, {sheet: "Colleges"});
-    XLSX.writeFile(wb, 'college_results.xlsx');
-}
-
-// Toggle favorite colleges
-function toggleFavorite(e) {
-    const collegeId = e.target.dataset.collegeId;
-    let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    
-    if (favorites.includes(collegeId)) {
-        favorites = favorites.filter(id => id !== collegeId);
-        e.target.classList.remove('favorite-active');
-    } else {
-        favorites.push(collegeId);
-        e.target.classList.add('favorite-active');
-    }
-    
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-}
-
-// Show college details modal
-function showCollegeDetails(e) {
-    e.preventDefault();
-    const collegeId = e.target.dataset.collegeId;
-    
-    // Fetch college details
-    fetch(`/api/college/${collegeId}`)
-        .then(response => response.json())
-        .then(data => {
-            const modal = document.getElementById('collegeModal');
-            const modalContent = modal.querySelector('.modal-content');
-            
-            // Update modal content
-            modalContent.innerHTML = `
-                <h2>${data.name}</h2>
-                <div class="college-details">
-                    <p><strong>Location:</strong> ${data.location}</p>
-                    <p><strong>NIRF Rank:</strong> ${data.nirfRank}</p>
-                    <p><strong>Placement Rate:</strong> ${data.placementRate}%</p>
-                    <p><strong>Average Package:</strong> ${data.avgPackage} LPA</p>
-                </div>
-                <button onclick="closeModal()" class="btn-primary">Close</button>
-            `;
-            
-            modal.style.display = 'block';
-        });
-}
-
-// Close modal
-function closeModal() {
-    const modal = document.getElementById('collegeModal');
-    modal.style.display = 'none';
-}
-
-// Handle search form submission
-async function handleSearch(e) {
-    e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-    
-    // Show loading state
-    document.getElementById('searchResults').innerHTML = '<div class="loader"></div>';
-    
-    try {
-        const response = await fetch('/search', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const html = await response.text();
-        document.getElementById('searchResults').innerHTML = html;
-        
-        // Initialize new interactive elements
-        initializeNewElements();
-    } catch (error) {
-        console.error('Search failed:', error);
-        document.getElementById('searchResults').innerHTML = '<p class="error">Search failed. Please try again.</p>';
-    }
-}
-
-// Initialize new elements after search
-function initializeNewElements() {
-    // Re-initialize tooltips
-    const tooltips = document.querySelectorAll('[data-tooltip]');
-    tooltips.forEach(tooltip => {
-        new Tooltip(tooltip);
+    themeToggle.addEventListener('click', () => {
+        htmlElement.classList.toggle('dark');
+        localStorage.setItem('theme', htmlElement.classList.contains('dark') ? 'dark' : 'light');
     });
-    
-    // Re-initialize compare checkboxes
-    const compareCheckboxes = document.querySelectorAll('.compare-checkbox');
-    compareCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', handleCompareChange);
-    });
+
+    // Check saved theme preference
+    if (localStorage.getItem('theme') === 'dark') {
+        htmlElement.classList.add('dark');
+    }
 }
 
-// Tooltip class
-class Tooltip {
-    constructor(element) {
-        this.element = element;
-        this.text = element.getAttribute('data-tooltip');
-        this.init();
-    }
-    
-    init() {
-        const tooltip = document.createElement('span');
-        tooltip.className = 'tooltip-text';
-        tooltip.textContent = this.text;
-        this.element.appendChild(tooltip);
-    }
-}
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', () => {
+    initThemeToggle();
+});
