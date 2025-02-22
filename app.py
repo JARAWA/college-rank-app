@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import numpy as np
 import os
@@ -11,6 +12,15 @@ app = FastAPI(
     title="MHTCET College Finder",
     description="Advanced college suggestion tool for MHTCET 2025",
     version="1.0.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
 )
 
 # Ensure static files are mounted correctly
@@ -228,6 +238,11 @@ async def error_page(request: Request):
         "request": request,
         "error": "An unexpected error occurred"
     })
+
+# Add a health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "data_loaded": data_manager is not None}
 
 if __name__ == "__main__":
     import uvicorn
