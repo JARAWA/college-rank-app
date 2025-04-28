@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MHTCET 2025 College Finder{% endblock %}</title>
+    <title>{% block title %}MHTCET Preference List Generator{% endblock %}</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -24,29 +24,29 @@
     :class="{ 'dark': darkMode }" 
     class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen"
 >
-    <!-- Navigation -->
-    <nav class="bg-white dark:bg-gray-800 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <a href="/" class="flex items-center space-x-2">
-                        <img src="{{ url_for('static', path='/images/nextstep_logo.jpeg') }}" alt="Logo" class="h-8 w-auto">
-                        <span class="text-xl font-bold">NextStep</span>
-                    </a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <!-- Dark Mode Toggle -->
-                    <button 
-                        @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)" 
-                        class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                    >
-                        <i x-show="!darkMode" class="fas fa-moon"></i>
-                        <i x-show="darkMode" class="fas fa-sun"></i>
-                    </button>
-                </div>
+<!-- Navigation -->
+<nav class="bg-white dark:bg-gray-800 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center">
+                <a href="https://nextstep-test.onrender.com" class="flex items-center space-x-2">
+                    <img src="{{ url_for('static', path='/images/nextstep_logo.jpeg') }}" alt="Logo" class="h-8 w-auto">
+                    <span class="text-xl font-bold">NextStep</span>
+                </a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Dark Mode Toggle -->
+                <button 
+                    @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)" 
+                    class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                >
+                    <i x-show="!darkMode" class="fas fa-moon"></i>
+                    <i x-show="darkMode" class="fas fa-sun"></i>
+                </button>
             </div>
         </div>
-    </nav>
+    </div>
+</nav>
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
