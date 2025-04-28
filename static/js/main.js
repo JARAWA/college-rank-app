@@ -1,4 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Add script tags for XLSX and FileSaver if not already present
+    if (typeof XLSX === 'undefined') {
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    }
+    
+    if (typeof saveAs === 'undefined') {
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js');
+    }
+    
     initializeForm();
     initializeToasts();
     setupEventListeners();
@@ -48,10 +57,12 @@ async function handleFormSubmit(event) {
         
         // Reinitialize components after page update
         initializeForm();
+        initializeToasts(); // Make sure toast container exists
         showToast('Search completed successfully', 'success');
         
     } catch (error) {
         console.error('Search error:', error);
+        initializeToasts(); // Make sure toast container exists
         showToast('Failed to search colleges. Please try again.', 'error');
     } finally {
         submitButton.disabled = false;
@@ -111,9 +122,13 @@ function getCellValue(row, field) {
     return value;
 }
 
-// Export Functionality
+// Variables to store current results
+let currentResults = [];
+
+// Updated Export Functionality
 async function exportToCSV() {
     try {
+        initializeToasts(); // Make sure toast container exists
         showToast('Preparing export...', 'info');
         
         const form = document.getElementById('searchForm');
@@ -138,14 +153,50 @@ async function exportToCSV() {
         showToast('Export completed successfully', 'success');
     } catch (error) {
         console.error('Export error:', error);
+        initializeToasts(); // Make sure toast container exists
         showToast('Failed to export results', 'error');
     }
 }
 
+// New Download Handler for Excel
+function handleDownload() {
+    if (!currentResults || currentResults.length === 0) {
+        initializeToasts();
+        showToast('No data available to download', 'error');
+        return;
+    }
+    try {
+        const worksheet = XLSX.utils.json_to_sheet(currentResults);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'MHTCET Preferences');
+        
+        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { 
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        });
+        
+        saveAs(blob, `MHTCET_Preferences_${new Date().toISOString().split('T')[0]}.xlsx`);
+        
+        initializeToasts();
+        showToast('Excel file downloaded successfully', 'success');
+    } catch (error) {
+        console.error('Download error:', error);
+        initializeToasts();
+        showToast('Failed to download Excel file', 'error');
+    }
+}
+
+// Helper function for displaying errors (used in handleDownload)
+function showError(message) {
+    initializeToasts();
+    showToast(message, 'error');
+}
+
 // Toast Notifications
 function initializeToasts() {
-    if (!document.getElementById('toast-container')) {
-        const container = document.createElement('div');
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
         container.id = 'toast-container';
         container.className = 'fixed bottom-4 right-4 z-50 space-y-2';
         document.body.appendChild(container);
@@ -154,6 +205,10 @@ function initializeToasts() {
 
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
+    if (!container) {
+        initializeToasts();
+    }
+    
     const toast = document.createElement('div');
     
     const colors = {
@@ -174,7 +229,7 @@ function showToast(message, type = 'info') {
     
     toast.innerHTML = `${icons[type]}<span>${message}</span>`;
     
-    container.appendChild(toast);
+    document.getElementById('toast-container').appendChild(toast);
     
     // Animate in
     toast.style.opacity = '0';
@@ -189,7 +244,11 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(1rem)';
-        setTimeout(() => container.removeChild(toast), 300);
+        setTimeout(() => {
+            if (document.getElementById('toast-container').contains(toast)) {
+                document.getElementById('toast-container').removeChild(toast);
+            }
+        }, 300);
     }, 3000);
 }
 
@@ -231,6 +290,17 @@ function debounce(func, wait) {
     };
 }
 
+// Function to dynamically load external scripts
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
 // Event Listeners
 function setupEventListeners() {
     // Sort controls
@@ -248,6 +318,27 @@ function setupEventListeners() {
             localStorage.setItem(`form_${input.id}`, input.value);
         }, 500));
     });
+    
+    // Export button
+    const exportButton = document.getElementById('exportButton');
+    if (exportButton) {
+        exportButton.addEventListener('click', exportToCSV);
+    }
+    
+    // Download button
+    const downloadButton = document.getElementById('downloadButton');
+    if (downloadButton) {
+        downloadButton.addEventListener('click', () => {
+            // Extract data from table before downloading
+            extractTableData();
+            handleDownload();
+        });
+    }
+    
+    // Extract data initially if results are present
+    if (document.querySelector('table tbody tr')) {
+        extractTableData();
+    }
 }
 
 // Dark Mode
@@ -275,6 +366,41 @@ function restoreFormState() {
             input.value = savedValue;
         }
     });
+}
+
+// Extract and update current results from the table
+function extractTableData() {
+    const tableRows = document.querySelectorAll('table tbody tr');
+    const extractedResults = [];
+    
+    if (tableRows && tableRows.length > 0) {
+        tableRows.forEach(row => {
+            const columns = row.querySelectorAll('td');
+            if (columns && columns.length >= 5) {
+                const result = {
+                    college_name: columns[0].querySelector('.text-sm').textContent.trim(),
+                    college_code: columns[0].querySelector('.text-xs').textContent.replace('Code:', '').trim(),
+                    branch_name: columns[1].querySelector('.text-sm').textContent.trim(),
+                    branch_code: columns[1].querySelector('.text-xs').textContent.replace('Code:', '').trim(),
+                    category: columns[2].querySelector('.text-sm').textContent.trim(),
+                    category_code: columns[2].querySelector('.text-xs').textContent.replace('Code:', '').trim(),
+                    quota_type: columns[3].querySelector('.text-sm').textContent.trim(),
+                    allocation_type: columns[3].querySelector('.text-xs').textContent.trim(),
+                    rank: columns[4].querySelector('.text-sm').textContent.replace('Rank:', '').trim(),
+                    percentile: columns[4].querySelector('.text-xs').textContent.replace('Percentile:', '').trim()
+                };
+                extractedResults.push(result);
+            }
+        });
+    }
+    
+    currentResults = extractedResults;
+    return extractedResults;
+}
+
+// Update current results
+function updateCurrentResults(results) {
+    currentResults = results;
 }
 
 // Initialize on load
