@@ -168,14 +168,14 @@ function handleDownload() {
     try {
         const worksheet = XLSX.utils.json_to_sheet(currentResults);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'MHTCET Preferences');
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'MHTCET Colleges');
         
         const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([excelBuffer], { 
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
         });
         
-        saveAs(blob, `MHTCET_Preferences_${new Date().toISOString().split('T')[0]}.xlsx`);
+        saveAs(blob, `MHTCET_Colleges_${new Date().toISOString().split('T')[0]}.xlsx`);
         
         initializeToasts();
         showToast('Excel file downloaded successfully', 'success');
@@ -319,13 +319,7 @@ function setupEventListeners() {
         }, 500));
     });
     
-    // Export button
-    const exportButton = document.getElementById('exportButton');
-    if (exportButton) {
-        exportButton.addEventListener('click', exportToCSV);
-    }
-    
-    // Download button
+    // Download button (Excel export)
     const downloadButton = document.getElementById('downloadButton');
     if (downloadButton) {
         downloadButton.addEventListener('click', () => {
